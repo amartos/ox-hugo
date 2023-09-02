@@ -4873,8 +4873,14 @@ The optional argument NOERROR is passed to
   (let ((f-or-b-name (if (buffer-file-name)
                          (file-name-nondirectory (buffer-file-name))
                        (buffer-name)))
-        (buf-has-subtree (org-hugo--buffer-has-valid-post-subtree-p))
-        ret)
+         buf-has-subtree ret)
+
+    ;; Include all files before checking for valid subtrees. As this
+    ;; operation modifies the buffer, it is saved, and restored
+    ;; later.
+    (save-buffer)
+    (save-excursion (org-export-expand-include-keyword))
+    (setq buf-has-subtree (org-hugo--buffer-has-valid-post-subtree-p))
 
     ;; Auto-update `org-id-locations' if it's nil or empty hash table
     ;; to avoid broken [[id:..]] type links.
@@ -4920,6 +4926,7 @@ The optional argument NOERROR is passed to
         ;; Attempt file-based export.
         (t
          (setq ret (org-hugo--export-file-to-md f-or-b-name async visible-only noerror))))))
+    (revert-buffer nil t t)
     ret))
 
 ;;;###autoload
