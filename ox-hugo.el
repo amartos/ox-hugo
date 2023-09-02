@@ -240,6 +240,12 @@ Dummy Org file paths are created in
 `org-hugo--get-pre-processed-buffer' by appending this variable
 to the link targets out of the current subtree scope.")
 
+(defvar org-hugo-processing nil
+  "Flag indicating that the export is in process.
+
+It is set to non-nil after `org-hugo-before-export-hook' hooks have
+been called and reset after `org-hugo-after-export-hook'.")
+
 
 ;;; Obsoletions
 
@@ -745,6 +751,15 @@ The software list is taken from https://www.gnu.org/software/."
   :group 'org-export-hugo
   :type '(repeat string))
 
+(defcustom org-hugo-before-export-hook nil
+  "List of functions run before the buffer is processed or saved."
+  :group 'org-export-hugo
+  :type hook)
+
+(defcustom org-hugo-after-export-hook nil
+  "List of functions run after exporting and reverting the buffer."
+  :group 'org-export-hugo
+  :type hook)
 
 
 ;;; Define Back-End
@@ -4875,6 +4890,8 @@ The optional argument NOERROR is passed to
                        (buffer-name)))
         (buf-has-subtree (org-hugo--buffer-has-valid-post-subtree-p))
         ret)
+    (run-hooks 'org-hugo-before-export-hook)
+    (setq org-hugo-processing t)
 
     ;; Auto-update `org-id-locations' if it's nil or empty hash table
     ;; to avoid broken [[id:..]] type links.
@@ -4920,6 +4937,8 @@ The optional argument NOERROR is passed to
         ;; Attempt file-based export.
         (t
          (setq ret (org-hugo--export-file-to-md f-or-b-name async visible-only noerror))))))
+    (run-hooks 'org-hugo-after-export-hook)
+    (setq org-hugo-processing nil)
     ret))
 
 ;;;###autoload
